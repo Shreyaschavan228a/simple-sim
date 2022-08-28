@@ -11,6 +11,7 @@ using namespace std;
 void read_file(string filepath);
 void parse_labels(string line, int line_number);
 vector<string> clean_file(string *s);
+vector<string> split_file(string *s);
 
 unordered_map<string, int> labels; 
 bool debug_mode = false;
@@ -69,13 +70,12 @@ void read_file(string filepath){
         std::stringstream buffer;
         buffer << asmFile.rdbuf();
         string file_contents = buffer.str();
-        lines = clean_file(&file_contents);
+        lines = split_file(&file_contents);
 
 
         if(debug_mode){
             cout << "File contents:\n";
             cout << file_contents << "\n";
-            cout << "Cleaned file contents:\n";
         }
         
         for(size_t i = 0; i < lines.size(); i++){
@@ -128,6 +128,30 @@ void parse_labels(string line, int line_number){
     }
 }
 
+//splits the file into lines without removing comments
+vector<string> split_file(string *s){
+    vector<string> result;
+    string cur = "";
+    for(size_t i = 0; i < (*s).size(); i++){
+        if((*s)[i] == ' ' && cur == ""){
+            continue;
+        }
+        else if((*s)[i] == '\n'){
+            if(cur != ""){
+                result.push_back(cur);
+                cur = "";
+            }
+            continue;
+        }
+        cur += (*s)[i];
+    }
+
+    if(cur.size() != 0){
+        result.push_back(cur);
+    }
+
+    return result;
+}
 // splits the file into lines and removes comments;
 vector<string> clean_file(string *s){
     vector<string> result;
