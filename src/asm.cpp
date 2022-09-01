@@ -35,9 +35,6 @@ unordered_map<string, int> instructions = {
 };
 
 int main(int argc, char** argv) {
-    int32_t a,b;
-    int32_t pc;
-    int32_t sp;
     string file_path;
     string usage = "Usage: ./asm [filename].asm [options]\noptions:\n\t-b : Display debug tokens (file contents, parsed labels)\n";
     if(argc == 1){
@@ -110,6 +107,7 @@ void read_file(string filepath){
     }
     else{
         cerr << "Failed to open file" << filepath << endl;
+        exit(0);
     }
     asmFile.close();
 }
