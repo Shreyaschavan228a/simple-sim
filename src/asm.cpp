@@ -132,7 +132,7 @@ void lex_line(string *line, int line_number){
     }
 
     //check if the 0th token is a valid instruction
-    if(!(tokens[0][0] <= 'z' && tokens[0][0] >= 'a')){
+    if(!((tokens[0][0] <= 'z' && tokens[0][0] >= 'a') || tokens[0] == "HALT" || tokens[0] == "SET")){
         tokens[0]  = tokens[0].substr(1, tokens[0].size() - 1);
     }
     
