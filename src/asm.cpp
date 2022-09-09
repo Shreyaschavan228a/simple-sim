@@ -132,11 +132,10 @@ void lex_line(string *line, int line_number){
         return;
     }
     else{
-        // cout << tokens.size() << " " << tokens[0] << endl;
         if(tokens.size() == 1){
             if((tokens[0][0] >= 'a' && tokens[0][0] <= 'z') && tokens[0][tokens[0].size() - 1] == ':'){
                 labels.insert(make_pair(tokens[0].substr(0, tokens[0].size() - 1), line_number));
-                program.push_back(make_pair(tokens[0].substr(0, tokens[0].size() - 1), "label"));
+                program.push_back(make_pair("label",tokens[0].substr(0, tokens[0].size() - 1)));
             }
             else{
                 cerr << "Invalid label " << tokens[0] << endl;
@@ -144,12 +143,15 @@ void lex_line(string *line, int line_number){
             }
         }
         else if(tokens.size() == 2){
-            if(tokens[1] == ":"){
+            if(tokens[1] == ":" && (tokens[0][0] >= 'a' && tokens[0][0] <= 'z')){
                 labels.insert(make_pair(tokens[0], line_number));
-                program.push_back(make_pair(tokens[0], "label"));
+                program.push_back(make_pair("label", tokens[0]));
+            }
+            else{
+                cerr << "Invalid label " << tokens[0] << endl;
+                exit(0);
             }
         }
-
     }
 }
 
