@@ -121,30 +121,9 @@ void lex_line(string *line, int line_number){
 
     vector<string> tokens = split_string(line);
 
-    // this block only runs when the instruction is associated with a label 
-    //and there is a space between ':' and the first letter of the instruction.
-    // find a way to fix so that this isnt needed
-    if(tokens.size() == 3){
-        if(instructions.find(tokens[1]) != instructions.end()){
-            program.push_back(make_pair(tokens[1], tokens[2]));
-            return;
-        }
-    }
-
-    //check if the 0th token is a valid instruction
-    if(!((tokens[0][0] <= 'z' && tokens[0][0] >= 'a') || tokens[0] == "HALT" || tokens[0] == "SET")){
-        tokens[0]  = tokens[0].substr(1, tokens[0].size() - 1);
-    }
-    
+    // check if the 1st token is a valid instruction
     if(instructions.find(tokens[0]) != instructions.end()){
-        //found valid instruction thats not part of a label
-        
-        // instructions associated with a label
-        if(tokens.size() == 3){
-            program.push_back(make_pair(tokens[1], tokens[2]));
-        }
-        //free instructions
-        else if(tokens.size() == 2){
+        if(tokens.size() == 2){
             program.push_back(make_pair(tokens[0], tokens[1]));
         }
         else{
@@ -153,10 +132,24 @@ void lex_line(string *line, int line_number){
         return;
     }
     else{
-        if(tokens[0][0] >= 'a' && tokens[0][0] <= 'z'){
-            labels.insert(make_pair(tokens[0], line_number));
-            program.push_back(make_pair(tokens[0], "label"));
+        // cout << tokens.size() << " " << tokens[0] << endl;
+        if(tokens.size() == 1){
+            if((tokens[0][0] >= 'a' && tokens[0][0] <= 'z') && tokens[0][tokens[0].size() - 1] == ':'){
+                labels.insert(make_pair(tokens[0].substr(0, tokens[0].size() - 1), line_number));
+                program.push_back(make_pair(tokens[0].substr(0, tokens[0].size() - 1), "label"));
+            }
+            else{
+                cerr << "Invalid label " << tokens[0] << endl;
+                exit(0);
+            }
         }
+        else if(tokens.size() == 2){
+            if(tokens[1] == ":"){
+                labels.insert(make_pair(tokens[0], line_number));
+                program.push_back(make_pair(tokens[0], "label"));
+            }
+        }
+
     }
 }
 
@@ -165,13 +158,19 @@ vector<string> split_string(string *s){
     vector<string> result;
     string cur = "";
     for(size_t i = 0; i < (*s).size(); i++){
-        if((*s)[i] == ' ' && cur == ""){
+        if(((*s)[i] == ' ' && cur == "") || ((*s)[i] == '\t' && cur == "")){
             continue;
         }
         else if((*s)[i] == ' ' || (*s)[i] == ':'){
             if(cur != ""){
+                if((*s)[i] == ':'){
+                    cur += ':';
+                }
                 result.push_back(cur);
                 cur = "";
+            }
+            else if(cur == "" && (*s)[i] == ':'){
+                result.push_back(":");
             }
             continue;
         }
@@ -189,23 +188,7 @@ vector<string> clean_file(string *s){
     vector<string> result;
     string cur = "";
     for(size_t i = 0; i < (*s).size(); i++){
-        if((*s)[i] == ' ' && cur == ""){
-            continue;
-        }
-        else if((*s)[i] == '\n' || (*s)[i] == ':'){
-            if(cur != ""){
-                if((*s)[i] == ':'){
-                    // weird hack to properly parse instructions directly in front of labels;
-                    (*s)[i] = '\t';
-                    i -= 1;
-                    cur += ':';
-                }
-                result.push_back(cur);
-                cur = "";
-            }
-            continue;
-        }
-        else if((*s)[i] == ';'){
+        if((*s)[i] == ';'){
             //if cur == "" then the line was a comment
             result.push_back(cur);
             cur = "";
@@ -213,6 +196,19 @@ vector<string> clean_file(string *s){
                 i++;
             }
             i++;
+        }
+        else if(((*s)[i] == ' ' && cur == "") || ((*s)[i] == '\t' && cur == "")){
+            continue;
+        }
+        else if((*s)[i] == '\n' || (*s)[i] == ':'){
+            if(cur != ""){
+                if((*s)[i] == ':'){
+                    cur += ':';
+                }
+                result.push_back(cur);
+                cur = "";
+            }
+            continue;
         }
         cur += (*s)[i];
     }
