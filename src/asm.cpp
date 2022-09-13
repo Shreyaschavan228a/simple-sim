@@ -13,6 +13,8 @@ string trim(string *s);
 void create_list_file(string file_path);
 string int_to_hex(int a);
 string int_to_hex(string a);
+void create_log_file(string file_path);
+
 
 struct program_thing {
     int pc;
@@ -24,6 +26,7 @@ struct program_thing {
 unordered_map<string, int> labels;
 vector<program_thing> program;
 vector<pair<int, string>> binary_program;
+vector<string> errors;
 
 
 bool debug_mode = false;
@@ -132,12 +135,18 @@ int main(int argc, char** argv) {
 
     // output
     create_list_file(file_path);
+    create_log_file(file_path);
 
     if(debug_mode){
         cout << "\nbinary encoded program:\n";
         for(size_t i = 0; i < binary_program.size(); i++){
             cout << binary_program[i].first << " " << program[i].name << " " << binary_program[i].second << endl;
         }
+    }
+
+    if(errors.size() != 0){
+        cout << "Errors found in " << file_path << endl;
+        cout << "Running o file in emu may have unexpected behaviour" << endl;
     }
     return 0;
 }
@@ -212,8 +221,8 @@ void lex_line(string *line, int *pc){
     else{
         if(tokens.size() == 1){
             if(labels.find(tokens[0]) != labels.end()){
-                cerr << "Duplicate label detected:" << tokens[0] << endl;
-                exit(0);
+                errors.push_back("Duplicate label detected : " + tokens[0]);
+                // cerr << "Duplicate label detected:" << tokens[0] << endl;
             }
             if((tokens[0][0] >= 'a' && tokens[0][0] <= 'z') && tokens[0][tokens[0].size() - 1] == ':'){
                 labels.insert(make_pair(tokens[0].substr(0, tokens[0].size() - 1), *pc));
@@ -226,15 +235,15 @@ void lex_line(string *line, int *pc){
                 program.push_back(a);
             }
             else{
-                cerr << "Invalid label " << tokens[0] << endl;
-                exit(0);
+                errors.push_back("Invalid label : " + tokens[0]);
+                // cerr << "Invalid label " << tokens[0] << endl;
             }
         }
         else if(tokens.size() == 2){
             if(tokens[1] == ":" && (tokens[0][0] >= 'a' && tokens[0][0] <= 'z')){
                 if(labels.find(tokens[0]) != labels.end()){
-                    cerr << "Duplicate label detected:" << tokens[0] << endl;
-                    exit(0);
+                    errors.push_back("Duplicate label detected : " + tokens[0]);
+                    // cerr << "Duplicate label detected:" << tokens[0] << endl;
                 }
                 else{
                     labels.insert(make_pair(trim(&tokens[0]), *pc));
@@ -249,8 +258,8 @@ void lex_line(string *line, int *pc){
 
             }
             else{
-                cerr << "Invalid label " << tokens[0] << endl;
-                exit(0);
+                errors.push_back("Invalid label : " + tokens[0]);
+                // cerr << "Invalid label " << tokens[0] << endl;
             }
         }
     }
@@ -351,8 +360,9 @@ void generate_binary(){
                             found_valid_instruction = true;
                             string new_operand = program[j+1].operand;
                             if(!valid_number(new_operand)){
-                                cerr << "data and SET instructions only support a valid numerical operand" << endl;
-                                exit(0);
+                                errors.push_back("data and SET instructions only support a valid numerical operand");
+                                // cerr << "data and SET instructions only support a valid numerical operand" << endl;
+                                binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                             }
                             else{
                                 binary_program.push_back(make_pair(pc,string_to_binary(new_operand, i) + int_to_binary(instructions.at(instruction))));
@@ -362,13 +372,17 @@ void generate_binary(){
                     }
 
                     if(!found_valid_instruction){
-                        cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                        exit(0);
+                        binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
+                        errors.push_back("Invalid argument to " + instruction + " : " + operand);
+                        // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
+                        // exit(0);
                     }
                 }
                 else{
-                    cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                    exit(0);
+                    binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
+                    errors.push_back("Invalid argument to " + instruction + " : " + operand);
+                    // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
+                    // exit(0);
                 }
             }
 
@@ -382,15 +396,19 @@ void generate_binary(){
                     binary_program.push_back(make_pair(pc, string_to_binary(to_string(offset), i) + int_to_binary(instructions.at(instruction))));
                 }
                 else{
-                    cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                    exit(0);
+                    binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
+                    errors.push_back("Invalid argument to " + instruction + " : " + operand);
+                    // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
+                    // exit(0);
                 }
             }
 
             // instruction doesnt take any operands
             else if(instructions.find(instruction) != instructions.end()){
                 if(operand != ""){
-                    cerr << "unexpected operand " << pc << " " << instruction << endl;
+                    binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
+                    errors.push_back("Unexpected operand " + to_string(pc) + " " + instruction);
+                    // cerr << "unexpected operand " << pc << " " << instruction << endl;
                 }
                 binary_program.push_back(make_pair(pc,"000000000000000000000000" + int_to_binary(instructions.at(instruction))));
             }
@@ -401,8 +419,10 @@ void generate_binary(){
 string string_to_binary(string decimal_string, int pc){
     string res = "";
     if(!valid_number(decimal_string)){
-        cerr << "Invalid number" << decimal_string << endl;
-        exit(0);
+        errors.push_back("Invalid number " + decimal_string);
+        // cerr << "Invalid number" << decimal_string << endl;
+        // exit(0);
+        return "000000000000000000000000";
     }
 
     // octal number
@@ -448,8 +468,9 @@ string string_to_binary(string decimal_string, int pc){
             }
         }
         if(res.size() > 24){
-            cerr << "Operand causes overflow " << decimal_string << endl;
-            return res.substr(0,24);
+            errors.push_back("Operand causes overflow " + decimal_string);
+            // cerr << "Operand causes overflow " << decimal_string << endl;
+            return "000000000000000000000000";
         }
         while(res.size() < 24){
             res = "0" + res;
@@ -535,8 +556,9 @@ string string_to_binary(string decimal_string, int pc){
             }
         }
         if(res.size() > 24){
-            cerr << "Operand causes overflow " << decimal_string << endl;
-            return res.substr(0,24);
+            errors.push_back("Operand causes overflow " + decimal_string);
+            // cerr << "Operand causes overflow " << decimal_string << endl;
+            return "000000000000000000000000";
         }
         while(res.size() < 24){
             res = "0000" + res;
@@ -551,7 +573,8 @@ string string_to_binary(string decimal_string, int pc){
             a = stoi(decimal_string);
         }
         catch(invalid_argument& e){
-            cerr << "No arguments found for " << program[pc].pc << " " << program[pc].name << endl;
+            errors.push_back("Invalid arguments to " + to_string(program[pc].pc) + " " + program[pc].name);
+            // cerr << "Invalid arguments found for " << program[pc].pc << " " << program[pc].name << endl;
             return "000000000000000000000000";
         }
         for(int i = 23; i >= 0; i--){
@@ -668,10 +691,26 @@ string trim(string *s){
 
 
 void create_list_file(string file_path){
-    ofstream list_file(file_path.substr(0, file_path.size() - 4) + "_list.l", ios::out);
+    ofstream list_file(file_path.substr(0, file_path.size() - 4) + ".l", ios::out);
     for(size_t i = 0; i < program.size(); i++){
         string str = int_to_hex(program[i].pc) + " " + int_to_hex(binary_program[i].second) + " " + program[i].name + " " + program[i].operand + "\n";
         list_file << str;
     }
     list_file.close();
+}
+
+
+
+void create_log_file(string file_path){
+    ofstream log_file(file_path.substr(0, file_path.size() - 4) + ".log", ios::out);
+    if(errors.size() == 0){
+        log_file << "No errors found\n";
+    }
+    else{
+        log_file << errors.size() << " error(s) found\n";
+        for(size_t i = 0; i < errors.size(); i++){
+            log_file << errors[i] << "\n";
+        }
+    }
+    log_file.close();
 }
