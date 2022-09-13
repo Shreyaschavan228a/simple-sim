@@ -10,6 +10,9 @@ string string_to_binary(string decimal_string, int pc);
 string int_to_binary(int decimal);
 bool valid_number(string s);
 string trim(string *s);
+void create_list_file(string file_path);
+string int_to_hex(int a);
+string int_to_hex(string a);
 
 struct program_thing {
     int pc;
@@ -126,6 +129,9 @@ int main(int argc, char** argv) {
     
     //pass 2
     generate_binary();
+
+    // output
+    create_list_file(file_path);
 
     if(debug_mode){
         cout << "\nbinary encoded program:\n";
@@ -575,6 +581,21 @@ string int_to_binary(int decimal){
     return res;
 }
 
+string int_to_hex(int a){
+    stringstream s;
+    s <<  "0x" << setfill('0') << setw(8) << hex << setw(8) << a;
+    return s.str();
+}
+
+string int_to_hex(string a){
+    if(a == ""){
+        return "          ";
+    }
+    stringstream s;
+    bitset<32> set(a);
+    s <<  "0x" << setfill('0') << setw(8) << hex  << set.to_ulong();
+    return s.str();
+}
 
 //check if the given string is a valid hexadecimal / octal / decimal number
 bool valid_number(string s){
@@ -643,4 +664,14 @@ string trim(string *s){
         }
     }
     return res;
+}
+
+
+void create_list_file(string file_path){
+    ofstream list_file(file_path.substr(0, file_path.size() - 4) + "_list.l", ios::out);
+    for(size_t i = 0; i < program.size(); i++){
+        string str = int_to_hex(program[i].pc) + " " + int_to_hex(binary_program[i].second) + " " + program[i].name + " " + program[i].operand + "\n";
+        list_file << str;
+    }
+    list_file.close();
 }
