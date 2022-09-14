@@ -14,6 +14,7 @@ void create_list_file(string file_path);
 string int_to_hex(int a);
 string int_to_hex(string a);
 void create_log_file(string file_path);
+void create_obj_file(string file_path);
 
 
 struct program_thing {
@@ -109,6 +110,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    string a = "00000000000000000000000000000000";
+    cout << a.length() << endl;
     //pass 1
     read_file(file_path);
 
@@ -136,6 +139,7 @@ int main(int argc, char** argv) {
     // output
     create_list_file(file_path);
     create_log_file(file_path);
+    create_obj_file(file_path);
 
     if(debug_mode){
         cout << "\nbinary encoded program:\n";
@@ -159,7 +163,7 @@ void read_file(string filepath){
     vector<string> lines;
 
     if(asmFile.is_open()){
-        std::stringstream buffer;
+        stringstream buffer;
         buffer << asmFile.rdbuf();
         string file_contents = buffer.str();
         lines = clean_file(&file_contents);
@@ -713,4 +717,18 @@ void create_log_file(string file_path){
         }
     }
     log_file.close();
+}
+
+
+void create_obj_file(string file_path){
+    ofstream obj_file(file_path.substr(0, file_path.size() - 4) + ".o", ios::out | ios::binary);
+    string s = "";
+    for(size_t i = 0; i < binary_program.size(); i++){
+        if(binary_program[i].second == ""){
+            continue;
+        }
+        s += binary_program[i].second;
+    }
+    obj_file.write(s.c_str(), s.size()*sizeof(char));
+    obj_file.close();
 }
