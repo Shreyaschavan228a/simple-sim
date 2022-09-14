@@ -5,7 +5,15 @@ void read_file(string file_path);
 pair<string, int> convert(string code);
 vector<pair<string, int>> split_file(string* s);
 
+map<string, bool> options =  {
+    {"trace", false},
+    {"isa", false},
+    {"before", false},
+    {"after", false}
+};
+
 vector<pair<string, int>> binary_program;
+void set_option(string option);
 unordered_map<int, string> instructions = {
     {19, "data"},
     {0, "ldc"},
@@ -31,28 +39,38 @@ unordered_map<int, string> instructions = {
 };
 
 int main(int argc, char** argv) {
-    string usage = "Usage : ./emu [filename].o\n";
+    string usage = "Usage : ./emu [options] [filename].o\noptions:\n\t-isa : print isa\n\t-trace : show program trace"
+    "\n\t-before : show memory dump before execution\n\t-after : show memory dump after execution\n";
     if(argc == 1){
         cerr << usage;
         exit(0);
     }
-    else if(argc > 2){
+    else if(argc > 6){
         cerr << "Too many arguments\n";
         cerr << usage;
         exit(0);
     }
+    else{
+        for(size_t i = 1; i < (size_t)(argc-1); i++){
+            set_option(string(argv[i]).substr(1));
+        }
+    }
 
-    string file_path = argv[1];
+    string file_path = argv[argc-1];
     if(file_path.substr(file_path.size() - 2, 2) != ".o"){
         cout << "Invalid file name";
         exit(0);
     }
 
+
     read_file(file_path);
 
-    for(size_t i = 0; i < binary_program.size(); i++){
-        cout << binary_program[i].first << " " << binary_program[i].second << endl;
+    if(options.at("isa")){
+        for(size_t i = 0; i < binary_program.size(); i++){
+            cout << binary_program[i].first << " " << binary_program[i].second << endl;
+        }
     }
+    
     return 0;
 }
 
@@ -73,10 +91,7 @@ void read_file(string file_path){
         obj_file.read(buffer, size);
         // make std::string from the buffer
         string file_contents(buffer);
-        vector<pair<string, int>> split = split_file(&file_contents);
-        for(size_t i = 0; i < split.size(); i++){
-            cout << split[i].first << " " << split[i].second << endl;
-        }
+        binary_program = split_file(&file_contents);
     }
 
     obj_file.close();
@@ -117,4 +132,9 @@ vector<pair<string, int>> split_file(string* s){
         }
     }
     return result;
+}
+
+
+void set_option(string option){
+    options[option] = true;
 }
