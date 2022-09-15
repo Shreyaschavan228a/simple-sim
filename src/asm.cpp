@@ -110,13 +110,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    string a = "00000000000000000000000000000000";
-    cout << a.length() << endl;
     //pass 1
     read_file(file_path);
-
-    
-
 
     // print parsed labels and final program
     if(debug_mode){
@@ -130,7 +125,6 @@ int main(int argc, char** argv) {
         for(size_t i = 0; i < program.size(); i++){
             cout << program[i].pc << ", "<< program[i].instruction_or_label << ", " << program[i].name << ", " << program[i].operand << endl;
         }
-
     }
     
     //pass 2
@@ -167,7 +161,6 @@ void read_file(string filepath){
         buffer << asmFile.rdbuf();
         string file_contents = buffer.str();
         lines = clean_file(&file_contents);
-
 
         if(debug_mode){
             cout << "File contents:\n";
@@ -226,7 +219,6 @@ void lex_line(string *line, int *pc){
         if(tokens.size() == 1){
             if(labels.find(tokens[0]) != labels.end()){
                 errors.push_back("Duplicate label detected : " + tokens[0]);
-                // cerr << "Duplicate label detected:" << tokens[0] << endl;
             }
             if((tokens[0][0] >= 'a' && tokens[0][0] <= 'z') && tokens[0][tokens[0].size() - 1] == ':'){
                 labels.insert(make_pair(tokens[0].substr(0, tokens[0].size() - 1), *pc));
@@ -240,14 +232,12 @@ void lex_line(string *line, int *pc){
             }
             else{
                 errors.push_back("Invalid label : " + tokens[0]);
-                // cerr << "Invalid label " << tokens[0] << endl;
             }
         }
         else if(tokens.size() == 2){
             if(tokens[1] == ":" && (tokens[0][0] >= 'a' && tokens[0][0] <= 'z')){
                 if(labels.find(tokens[0]) != labels.end()){
                     errors.push_back("Duplicate label detected : " + tokens[0]);
-                    // cerr << "Duplicate label detected:" << tokens[0] << endl;
                 }
                 else{
                     labels.insert(make_pair(trim(&tokens[0]), *pc));
@@ -259,11 +249,9 @@ void lex_line(string *line, int *pc){
                     };
                     program.push_back(a);
                 }
-
             }
             else{
                 errors.push_back("Invalid label : " + tokens[0]);
-                // cerr << "Invalid label " << tokens[0] << endl;
             }
         }
     }
@@ -365,7 +353,6 @@ void generate_binary(){
                             string new_operand = program[j+1].operand;
                             if(!valid_number(new_operand)){
                                 errors.push_back("data and SET instructions only support a valid numerical operand");
-                                // cerr << "data and SET instructions only support a valid numerical operand" << endl;
                                 binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                             }
                             else{
@@ -378,15 +365,11 @@ void generate_binary(){
                     if(!found_valid_instruction){
                         binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                         errors.push_back("Invalid argument to " + instruction + " : " + operand);
-                        // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                        // exit(0);
                     }
                 }
                 else{
                     binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                     errors.push_back("Invalid argument to " + instruction + " : " + operand);
-                    // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                    // exit(0);
                 }
             }
 
@@ -402,8 +385,6 @@ void generate_binary(){
                 else{
                     binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                     errors.push_back("Invalid argument to " + instruction + " : " + operand);
-                    // cerr << "Invalid argument to " << instruction << ": " << operand << endl;
-                    // exit(0);
                 }
             }
 
@@ -412,7 +393,6 @@ void generate_binary(){
                 if(operand != ""){
                     binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
                     errors.push_back("Unexpected operand " + to_string(pc) + " " + instruction);
-                    // cerr << "unexpected operand " << pc << " " << instruction << endl;
                 }
                 binary_program.push_back(make_pair(pc,"000000000000000000000000" + int_to_binary(instructions.at(instruction))));
             }
@@ -424,8 +404,6 @@ string string_to_binary(string decimal_string, int pc){
     string res = "";
     if(!valid_number(decimal_string)){
         errors.push_back("Invalid number " + decimal_string);
-        // cerr << "Invalid number" << decimal_string << endl;
-        // exit(0);
         return "000000000000000000000000";
     }
 
@@ -473,7 +451,6 @@ string string_to_binary(string decimal_string, int pc){
         }
         if(res.size() > 24){
             errors.push_back("Operand causes overflow " + decimal_string);
-            // cerr << "Operand causes overflow " << decimal_string << endl;
             return "000000000000000000000000";
         }
         while(res.size() < 24){
@@ -561,7 +538,6 @@ string string_to_binary(string decimal_string, int pc){
         }
         if(res.size() > 24){
             errors.push_back("Operand causes overflow " + decimal_string);
-            // cerr << "Operand causes overflow " << decimal_string << endl;
             return "000000000000000000000000";
         }
         while(res.size() < 24){
@@ -578,7 +554,6 @@ string string_to_binary(string decimal_string, int pc){
         }
         catch(invalid_argument& e){
             errors.push_back("Invalid arguments to " + to_string(program[pc].pc) + " " + program[pc].name);
-            // cerr << "Invalid arguments found for " << program[pc].pc << " " << program[pc].name << endl;
             return "000000000000000000000000";
         }
         for(int i = 23; i >= 0; i--){
