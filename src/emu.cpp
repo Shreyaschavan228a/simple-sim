@@ -1,7 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+#define MEMORY_SIZE 10000
+
 void read_file(string file_path);
+void dump_before(int* ptr);
+void execute();
+void trace(string instruction, int operand, int pc);
 pair<string, int> convert(string code);
 vector<pair<string, int>> split_file(string* s);
 
@@ -38,6 +43,13 @@ unordered_map<int, string> instructions = {
     {20, "SET"}
 };
 
+
+int* memory = reinterpret_cast<int *> (calloc(MEMORY_SIZE, sizeof(int)));
+int sp = 0;
+int a = 0;
+int b = 0;
+
+
 int main(int argc, char** argv) {
     string usage = "Usage : ./emu [options] [filename].o\noptions:\n\t-isa : print isa\n\t-trace : show program trace"
     "\n\t-before : show memory dump before execution\n\t-after : show memory dump after execution\n";
@@ -70,6 +82,12 @@ int main(int argc, char** argv) {
             cout << binary_program[i].first << " " << binary_program[i].second << endl;
         }
     }
+
+    if(options.at("before")){
+        dump_before(memory);
+    }
+
+    // execute();
     
     return 0;
 }
@@ -137,4 +155,125 @@ vector<pair<string, int>> split_file(string* s){
 
 void set_option(string option){
     options[option] = true;
+}
+
+void dump_before(int* ptr){
+    for(int i = 0; i < MEMORY_SIZE; i++){
+        cout << (ptr+i) << " : " << *(ptr+i) << endl;
+    }
+}
+
+
+void execute(){
+    for(size_t pc = 0; pc < binary_program.size();){
+        string instruction = binary_program[pc].first;
+        int operand = binary_program[pc].second;
+        bool is_parameter = true;
+        pc++;
+        if(instruction == "data"){
+            *(memory + sp) = operand;
+            sp += 1;
+        }
+        else if(instruction == "ldc"){
+            b = a;
+            a = operand;
+        }
+        else if(instruction == "adc"){
+            a += operand;
+        }
+        else if(instruction == "ldl"){
+            b = a;
+            a = *(memory + sp + operand);
+        }
+        else if(instruction == "stl"){
+            *(memory + sp + operand) = a;
+            a = b;
+        }
+        else if(instruction == "ldnl"){
+            a = *(memory + a + operand);
+        }
+        else if(instruction == "stnl"){
+            *(memory + a + operand) = a;
+        }
+        else if(instruction == "add"){
+            a = a + b;
+            is_parameter = false;
+        }
+        else if(instruction == "sub"){
+            a = b - a;
+            is_parameter = false;
+        }
+        else if(instruction == "shl"){
+            a = b << a;
+            is_parameter = false;
+        }
+        else if(instruction == "shr"){
+            a = b >> a;
+            is_parameter = false;
+        }
+        else if(instruction == "adj"){
+            sp += operand;
+        }
+        else if(instruction == "a2sp"){
+            sp = a;
+            a = b;
+            is_parameter = false;
+        }
+        else if(instruction == "sp2a"){
+            b = a;
+            a = sp;
+            is_parameter = false;
+        }
+        else if(instruction == "call"){
+            b = a;
+            a = pc;
+            pc += operand;
+        }
+        else if(instruction == "return"){
+            pc = a;
+            a = b;
+            is_parameter = false;
+        }
+        else if(instruction == "brz"){
+            if(a == 0){
+                pc += operand;
+            }
+        }
+        else if(instruction == "brlz"){
+            if(a < 0){
+                pc += operand;
+            }
+        }
+        else if(instruction == "br"){
+            pc += operand;
+        }
+        else if(instruction == "HALT"){
+            is_parameter = false;
+            break;
+        }
+        else if(instruction == "SET"){
+            continue;
+        }
+        if(options.at("trace")){
+            if(is_parameter){
+                trace(instruction, operand, pc - 1);
+            }
+            else{
+                trace(instruction, INT32_MIN, pc - 1);
+            }
+        }
+    }
+}
+
+
+void trace(string instruction, int operand = INT32_MIN, int pc){
+    cout << "PC" << pc << " ";
+    cout << "A" << a << " ";
+    cout << "B" << b << " ";
+    cout << "SP" << sp << " ";
+    cout << instruction << " ";
+    if(operand != INT32_MIN){
+        cout << operand << " ";
+    }
+    cout << "\n";
 }
