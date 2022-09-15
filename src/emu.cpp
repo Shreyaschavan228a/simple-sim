@@ -4,7 +4,7 @@ using namespace std;
 #define MEMORY_SIZE 10000
 
 void read_file(string file_path);
-void dump_before(int* ptr);
+void dump_memory(int* ptr);
 void execute();
 void trace(string instruction, int operand, int pc);
 pair<string, int> convert(string code);
@@ -41,6 +41,17 @@ unordered_map<int, string> instructions = {
     {17, "br"},
     {18, "HALT"},
     {20, "SET"}
+};
+
+unordered_map<string, int> no_operand_instructions = {
+    {"add", 6},
+    {"sub", 7},
+    {"shl", 8},
+    {"shr", 9},
+    {"a2sp", 11},
+    {"sp2a", 12},
+    {"return", 14},
+    {"HALT", 18}
 };
 
 
@@ -84,10 +95,14 @@ int main(int argc, char** argv) {
     }
 
     if(options.at("before")){
-        dump_before(memory);
+        dump_memory(memory);
     }
 
-    // execute();
+    execute();
+
+    if(options.at("after")){
+        dump_memory(memory);
+    }
     
     return 0;
 }
@@ -157,7 +172,7 @@ void set_option(string option){
     options[option] = true;
 }
 
-void dump_before(int* ptr){
+void dump_memory(int* ptr){
     for(int i = 0; i < MEMORY_SIZE; i++){
         cout << (ptr+i) << " : " << *(ptr+i) << endl;
     }
@@ -170,6 +185,19 @@ void execute(){
         int operand = binary_program[pc].second;
         bool is_parameter = true;
         pc++;
+        if(no_operand_instructions.find(instruction) != no_operand_instructions.end()){
+            is_parameter = false;
+        }
+        // output trace before executing the instruction
+        if(options.at("trace")){
+            if(is_parameter){
+                trace(instruction, operand, pc - 1);
+            }
+            else{
+                trace(instruction, INT32_MIN, pc - 1);
+            }
+        }
+       
         if(instruction == "data"){
             *(memory + sp) = operand;
             sp += 1;
@@ -254,24 +282,17 @@ void execute(){
         else if(instruction == "SET"){
             continue;
         }
-        if(options.at("trace")){
-            if(is_parameter){
-                trace(instruction, operand, pc - 1);
-            }
-            else{
-                trace(instruction, INT32_MIN, pc - 1);
-            }
-        }
+
     }
 }
 
 
-void trace(string instruction, int operand = INT32_MIN, int pc){
-    cout << "PC" << pc << " ";
-    cout << "A" << a << " ";
-    cout << "B" << b << " ";
-    cout << "SP" << sp << " ";
-    cout << instruction << " ";
+void trace(string instruction, int operand, int pc){
+    cout << "PC " << pc << "\t";
+    cout << "A " << a << "\t";
+    cout << "B " << b << "\t";
+    cout << "SP " << sp << "\t";
+    cout << instruction << "\t";
     if(operand != INT32_MIN){
         cout << operand << " ";
     }
