@@ -252,19 +252,15 @@ void execute(){
         }
         else if(instruction == "add"){
             a = a + b;
-            is_parameter = false;
         }
         else if(instruction == "sub"){
             a = b - a;
-            is_parameter = false;
         }
         else if(instruction == "shl"){
             a = b << a;
-            is_parameter = false;
         }
         else if(instruction == "shr"){
             a = b >> a;
-            is_parameter = false;
         }
         else if(instruction == "adj"){
             sp += operand;
@@ -272,12 +268,10 @@ void execute(){
         else if(instruction == "a2sp"){
             sp = a;
             a = b;
-            is_parameter = false;
         }
         else if(instruction == "sp2a"){
             b = a;
             a = sp;
-            is_parameter = false;
         }
         else if(instruction == "call"){
             b = a;
@@ -287,7 +281,6 @@ void execute(){
         else if(instruction == "return"){
             pc = a;
             a = b;
-            is_parameter = false;
         }
         else if(instruction == "brz"){
             if(a == 0){
@@ -303,7 +296,6 @@ void execute(){
             pc += operand;
         }
         else if(instruction == "HALT"){
-            is_parameter = false;
             break;
         }
         else if(instruction == "SET"){
