@@ -380,7 +380,12 @@ void generate_binary(){
                 }
                 else if(labels.find(operand) != labels.end()){
                     int offset = labels[operand] - program[i].pc - 1;
-                    binary_program.push_back(make_pair(pc, string_to_binary(to_string(offset), i) + int_to_binary(instructions.at(instruction))));
+                    if(instruction == "br" && offset < 0){
+                        errors.push_back("Possible infinite loop detected " + instruction + " : " + operand);
+                    }
+                    else{
+                        binary_program.push_back(make_pair(pc, string_to_binary(to_string(offset), i) + int_to_binary(instructions.at(instruction))));
+                    }
                 }
                 else{
                     binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
