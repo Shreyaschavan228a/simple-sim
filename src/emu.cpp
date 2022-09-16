@@ -14,11 +14,14 @@ map<string, bool> options =  {
     {"trace", false},
     {"isa", false},
     {"before", false},
-    {"after", false}
+    {"after", false},
+    {"decode", false},
+    {"noexec", false}
 };
 
 vector<pair<string, int>> binary_program;
 void set_option(string option);
+
 unordered_map<int, string> instructions = {
     {19, "data"},
     {0, "ldc"},
@@ -62,13 +65,14 @@ int b = 0;
 
 
 int main(int argc, char** argv) {
-    string usage = "Usage : ./emu [options] [filename].o\noptions:\n\t-isa : print isa\n\t-trace : show program trace"
-    "\n\t-before : show memory dump before execution\n\t-after : show memory dump after execution\n";
+    string usage = "Usage : ./emu [options] [filename].o\noptions:\n\t-decode : print decoded program\n\t-trace : show program trace"
+    "\n\t-before : show memory dump before execution\n\t-after : show memory dump after execution\n\t-isa : show assembly isa"
+    "\n\t-noexec : dont execute the program. (use with before and/or decode)\n";
     if(argc == 1){
         cerr << usage;
         exit(0);
     }
-    else if(argc > 6){
+    else if(argc > 8){
         cerr << "Too many arguments\n";
         cerr << usage;
         exit(0);
@@ -81,24 +85,35 @@ int main(int argc, char** argv) {
 
     string file_path = argv[argc-1];
     if(file_path.substr(file_path.size() - 2, 2) != ".o"){
-        cout << "Invalid file name";
+        cout << "Invalid file name\n";
         exit(0);
+    }
+
+    if(options.at("isa")){
+        cout << "Instruction, Opcode" << endl;
+        for(int i = 0; i <= 20; i++){
+            cout << instructions.at(i) << " "  << i << endl;
+        }
+        cout << endl;
     }
 
 
     read_file(file_path);
 
-    if(options.at("isa")){
+    if(options.at("decode")){
         for(size_t i = 0; i < binary_program.size(); i++){
             cout << binary_program[i].first << " " << binary_program[i].second << endl;
         }
+        cout << endl;
     }
 
     if(options.at("before")){
         dump_memory(memory, file_path);
     }
 
-    execute();
+    if(!options.at("noexec")){
+        execute();
+    }
 
     if(options.at("after")){
         dump_memory(memory, file_path);
