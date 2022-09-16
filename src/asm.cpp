@@ -344,11 +344,11 @@ void generate_binary(){
                 }
                 // data and SET operations only support numerical values as valid operand
                 // for other instructions if operand is a valid label then the next instruction next to the label has to be data or SET
-                else if((instruction != "data" && instruction != "SET") && labels.find(operand) != labels.end()){
+                else if((instruction != "SET") && labels.find(operand) != labels.end()){
                     int label_pc = labels.at(operand);
                     bool found_valid_instruction = false;
                     for(size_t j = label_pc; j < program.size()-1; j++){
-                        if(program[j].name ==  operand && (program[j+1].name == "data" || program[j+1].name == "SET")){
+                        if(program[j].name ==  operand && (program[j+1].name == "SET")){
                             found_valid_instruction = true;
                             string new_operand = program[j+1].operand;
                             if(!valid_number(new_operand)){
@@ -362,9 +362,9 @@ void generate_binary(){
                         }
                     }
 
+                    // if a set instruction was not found after the label then replace the label with its pc
                     if(!found_valid_instruction){
-                        binary_program.push_back(make_pair(pc, "00000000000000000000000000000000"));
-                        errors.push_back("Invalid argument to " + instruction + " : " + operand);
+                        binary_program.push_back(make_pair(pc, string_to_binary(to_string(label_pc), i) + int_to_binary(instructions.at(instruction))));
                     }
                 }
                 else{
