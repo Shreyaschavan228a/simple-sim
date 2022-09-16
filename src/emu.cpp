@@ -4,7 +4,7 @@ using namespace std;
 #define MEMORY_SIZE 10000
 
 void read_file(string file_path);
-void dump_memory(int* ptr);
+void dump_memory(int* ptr, string file_path);
 void execute();
 void trace(string instruction, int operand, int pc);
 pair<string, int> convert(string code);
@@ -55,7 +55,7 @@ unordered_map<string, int> no_operand_instructions = {
 };
 
 
-int* memory = reinterpret_cast<int *> (calloc(MEMORY_SIZE, sizeof(int)));
+int* memory = reinterpret_cast<int *> (malloc(MEMORY_SIZE * sizeof(int)));
 int sp = 0;
 int a = 0;
 int b = 0;
@@ -95,13 +95,13 @@ int main(int argc, char** argv) {
     }
 
     if(options.at("before")){
-        dump_memory(memory);
+        dump_memory(memory, file_path);
     }
 
     execute();
 
     if(options.at("after")){
-        dump_memory(memory);
+        dump_memory(memory, file_path);
     }
     
     return 0;
@@ -172,10 +172,15 @@ void set_option(string option){
     options[option] = true;
 }
 
-void dump_memory(int* ptr){
+void dump_memory(int* ptr, string file_path){
+    stringstream ss;
     for(int i = 0; i < MEMORY_SIZE; i++){
-        cout << (ptr+i) << " : " << *(ptr+i) << endl;
+        ss << (ptr+i) << " : " << *(ptr+i) << "\n";
     }
+
+    ofstream dump(file_path.substr(0, file_path.size() - 1) + "dump");
+    dump << ss.str();
+    dump.close();
 }
 
 
